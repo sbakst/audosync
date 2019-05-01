@@ -29,14 +29,15 @@ vre =  re.compile(
 parser = argparse.ArgumentParser()
 parser.add_argument("directory", help = "Experiment directory with all subjects")
 parser.add_argument("subject", help = "subject number")
-parser.add_argument("-v", "--visualize", help = "Produce pngs of frames", action = "store_true")
+parser.add_argument("-p", "--pca", help = "Run PCA", action = "store_true")
+parser.add_argument("-v", "--visualize", help = "Produce pngs of pca frames", action = "store_true")
 parser.add_argument("-c", "--convert", help = "flip frames", action = "store_true")
 parser.add_argument("outfile", help = "outfile containing all of the measurements")
 args = parser.parse_args()
 
 outfile = os.path.join(args.directory, args.outfile)
 out = open(outfile, 'a')
-header = '\t'.join(['subject','timestamp', 'mindif', 't1', 'f1','f2', 'f3','f4', 'which_frame', 'num_frames'])
+header = '\t'.join(['subject','timestamp', 'mindif', 't1', 'which_frame', 'num_frames'])
 out.write(header + '\n')
 # Read in and parse the arguments, getting directory info and whether or not data should flop
 
@@ -124,27 +125,68 @@ for idx,a in enumerate(e.acquisitions):
     if indx == 0:
         indx == indx +1
         # The numbers above are going to help us pick the frame for acoustics analysis and for pca.
-    frames[idx,:,:] = rfrlist[indx] # this is the frame for pca
+        winrframe = rfrlist[indx]
+        winrframe = ndimage.median_filter(winrframe,5) # filter
+    frames[idx,:,:] =  winrframe# this is the frame for pca
 
 # Everything above this line is articulation. Everything below is acoustics at the timepoint corresponding to the determined frame.
 
 ###############################################################################################################################################################################
-
-    # We will need these numbers for acoustics.
-    # meas_t1 = (Rframes[indx]).t1
-    # print(meas_t1)
+# PCA
+if args.pca:
+    frames = np.squeeze(frames)
+    print(np.shape(frames))
+    trial = np.squeeze(np.array(trial))
+    phone = np.squeeze(np.array(phone))
+    tstamp = np.squeeze(np.array(tstamp))
+    keep_indices = np.where(~np.isnan(frames).any(axis=(1,2)))[0]
+    kept_phone = np.array(phone,str)[keep_indices]
+    kept_trial = np.array(trial,str)[keep_indices]
+    kept_frames = frames[keep_indices]
+    kept_tstamp = tstamp[keep_indices]
     
+    n_components = 6
+    pca = PCA(n_components=n_components)
     
+    frames_reshaped = kept_frames.reshape([kept_frames.shape[0], kept_frames.shape[1]*kept_frames.shape[2]])
+    
+    pca.fit(frames_reshaped)
+    analysis = pca.transform(frames_reshaped)
+    
+    meta_headers = ["trial","timestamp","phone"]
+    pc_headers = ["pc"+str(i+1) for i in range(0,n_components)] # determine number of PC columns; changes w.r.t. n_components
+    headers = meta_headers + pc_headers
 
-    # We will not do pca or other things in this script besides acoustics. We are looping over all subjects, and masking is done on a per-block basis.
+    out_file = args.outfile
+
+    d = np.row_stack((headers,np.column_stack((kept_trial,kept_tstamp,kept_phone,analysis))))
+    np.savetxt(out_file, d, fmt="%s", delimiter =',')
+
+    print("Data saved. Explained variance ratio of PCs: %s", str(pca.explained_variance_ratio_))
+
+    expl = './expl.txt'
+    fifi = open(expl, 'w')
+    fifi.write(str(pca.explained_variance_ratio_))
+    fifi.close()
+    
+    if args.visualize:
+        image_shape = (416,69)
+        print(e.acquisitions) 
+        for n in range(0,n_components):
+            d = pca.components_[n].reshape(image_shape)# We will need these numbers for acoustics.
+            mag = np.max(d) - np.min(d)
+            d = (d-np.min(d))/mag*255
+            pcn = np.flipud(e.acquisitions[0].image_converter.as_bmp(d)) # converter from any frame will work; here we use the first
+            
+            
 #     t1_start = 0.0
-#     t1_step = 0.01
-#     try:
+#            if args.flop:  t1_step = 0.01
+#                pcn = np.fliplr(pcn)  try:
 #         formant_proc = subprocess.check_call(["rformant", wav])#, stdin=rdc_proc.stdout) # also remove 20
-#     except subprocess.CalledProcessError as e:
-#         print(e)
-#         print(e.stdout)
-#     ppl_proc = subprocess.Popen(
+#           plt.title("PC{:} min/max loadings".format(n+1))  except subprocess.CalledProcessError as e:
+#           plt.imshow(pcn, cmap="Greys_r")      print(e)
+#           savepath = "pc{:}.pdf".format(n+1)      print(e.stdout)
+#           plt.savefig(savepath)  ppl_proc = subprocess.Popen(
 #         ["pplain", fbfile],
 #         stdout=subprocess.PIPE)
 #     print(fbfile)
@@ -170,3 +212,5 @@ for idx,a in enumerate(e.acquisitions):
 #     framef4 = (f4.label_at(meas_t1)).text
 #     row_out = '\t'.join([str(i),str(a.timestamp), str(val), str(meas_t1), framef1, framef2, framef3, framef4, str(indx), str(len(mindiffs))])
 #     out.write(row_out+'\n')
+
+
