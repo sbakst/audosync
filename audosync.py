@@ -8,7 +8,7 @@ from scipy import stats
 
 
 
-def get_datadf(bpr, au, syncloc):
+def get_datadf_simple(bpr, au, syncloc):
     
     frame_times = audiolabel.LabelManager(from_file = syncloc, from_type='table', t1_col='seconds').as_df()[1]
     frame_times = frame_times.rename(columns={'text':'frameN','t1':'time'})
