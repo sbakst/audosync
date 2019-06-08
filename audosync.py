@@ -93,14 +93,13 @@ def get_corr_pos(validdf, tg):
     pos = []
     pm = audiolabel.LabelManager(from_file = tg, from_type = 'praat')    
     for i in range(0, len(validdf)-1):
-        if validdf.p[i]<p_crit and np.abs(validdf.r[i]) > r_crit:
-            synctime = validdf.time[i]
-            labmatch = pm.tier('phone').label_at(synctime).text
-            labt1 = int(pm.tier('phone').label_at(synctime).t1)
-            labt2 = int(pm.tier('phone').label_at(synctime).t2)
-            labperc = float((synctime-labt1)/(labt2-labt1))            
-            phone.append(labmatch)
-            pos = pos + labperc
+        synctime = validdf.time[i]
+        labmatch = pm.tier('phone').label_at(synctime).text
+        labt1 = int(pm.tier('phone').label_at(synctime).t1)
+        labt2 = int(pm.tier('phone').label_at(synctime).t2)
+        labperc = float((synctime-labt1)/(labt2-labt1))            
+        phone.append(labmatch)
+        pos = pos + labperc
     posdf = pd.concat([validdf,pd.DataFrame({'phone':phone})], ignore_index = False, axis = 1)
     posdf = pd.concat([posdf,pd.DataFrame({'pos':pos})], ignore_index = False, axis = 1)
     return posdf
