@@ -99,7 +99,7 @@ def get_corr_pos(validdf, tg):
         labt2 = int(pm.tier('phone').label_at(synctime).t2)
         labperc = float((synctime-labt1)/(labt2-labt1))            
         phone.append(labmatch)
-        pos = pos + labperc
+        pos.append(labperc)
     posdf = pd.concat([validdf,pd.DataFrame({'phone':phone})], ignore_index = False, axis = 1)
     posdf = pd.concat([posdf,pd.DataFrame({'pos':pos})], ignore_index = False, axis = 1)
     return posdf
