@@ -54,7 +54,7 @@ def syncmatch(frame_times, windowlen=0.2, offset=0):
     ps = []
     starttimes = [t for t in validdf['time'] if t+windowlen < np.max(validdf['time'])]
     for starttime in starttimes:
-        subdf = validdf[(validdf['time'] >= starttime) & (validdf['time'] <= starttime+windowlen)]
+        subdf = validdf[(validdf['time'] >= starttime-windowlen/2) & (validdf['time'] <= starttime+windowlen/2)]
         sts = stats.linregress(x=subdf['us_diff'], y=subdf['au_diff'])
         rs = rs + [sts.rvalue]
         ps = ps + [sts.pvalue]
