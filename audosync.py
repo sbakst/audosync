@@ -38,7 +38,7 @@ def get_datadf_simple(bpr, au, syncloc):
 # au: Parselmouth Sound object, mono
 # sync: LabelManager object
 # windowlen: window length for analysis, in seconds
-def syncmatch(frame_times, windowlen=0.2, offset=0):
+def syncmatch(frame_times, windowlen=0.2, offset=0, limitamp=False):
 
     if offset!=0:
         auonly = frame_times.drop(columns=['frameN','us_diff'])
@@ -46,10 +46,13 @@ def syncmatch(frame_times, windowlen=0.2, offset=0):
         auonly.time = auonly.time.apply(lambda x: x+offset)
         frame_times = pd.merge_asof(usonly, auonly, on='time')
 
-#     validdf = frame_times[(frame_times['us_diff'] > 0) & (frame_times['au_diff'] > 0)].reset_index()
-    min_intensity = frame_times['au_int'].max()-25
-    validdf = frame_times[(frame_times['us_diff'] > 0) & (frame_times['au_diff'] > 0) 
-                          & (frame_times['au_int'] > min_intensity)].reset_index()
+    if limitamp:
+        min_intensity = frame_times['au_int'].max()-25
+        validdf = frame_times[(frame_times['us_diff'] > 0) & (frame_times['au_diff'] > 0) 
+                              & (frame_times['au_int'] > min_intensity)].reset_index()
+    else:
+        validdf = frame_times[(frame_times['us_diff'] > 0) & (frame_times['au_diff'] > 0)].reset_index()
+
     rs = []
     ps = []
     starttimes = [t for t in validdf['time'] if t+windowlen < np.max(validdf['time'])]
