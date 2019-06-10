@@ -8,12 +8,17 @@ from scipy import stats
 
 
 
-def get_datadf_simple(bpr, au, syncloc):
+# could pass in frame array instead of bpr
+def get_datadf_simple(rawUSinput, au, syncloc):
     
     frame_times = audiolabel.LabelManager(from_file = syncloc, from_type='table', t1_col='seconds').as_df()[1]
     frame_times = frame_times.rename(columns={'text':'frameN','t1':'time'})
 
-    frames = [bpr.get_frame(i) for i in range(0, bpr.nframes)]
+    if isinstance(rawUSinput,np.ndarray):
+        frames = rawUSinput
+    else :
+        frames = [bpr.get_frame(i) for i in range(0, bpr.nframes)]
+    
     frames_diff = [np.mean(np.abs(frames[i]-frames[i-1])) for i in range(1, len(frames))]
     
     frame_times['us_diff'] = frame_times['frameN'].apply(lambda x: frames_diff[int(x)-1] 
