@@ -17,7 +17,7 @@ def get_datadf_simple(rawUSinput, au, syncloc):
     if isinstance(rawUSinput,np.ndarray):
         frames = rawUSinput
     else :
-        frames = [bpr.get_frame(i) for i in range(0, bpr.nframes)]
+        frames = [rawUSinput.get_frame(i) for i in range(0, rawUSinput.nframes)]
     
     frames_diff = [np.mean(np.abs(frames[i]-frames[i-1])) for i in range(1, len(frames))]
     
