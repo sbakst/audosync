@@ -4,12 +4,14 @@ import numpy as np
 import ultratils.pysonix.bprreader
 import pandas as pd
 import parselmouth
+from parselmouth.praat import call as pcall  
 from scipy import stats
 
 
 
 # could pass in frame array instead of bpr
-def get_datadf_simple(rawUSinput, au, syncloc):
+# if maxhz != 0, filter out frequencies under maxhz before mfcc transformation
+def get_datadf_simple(rawUSinput, au, syncloc, maxhz=300):
     
     frame_times = audiolabel.LabelManager(from_file = syncloc, from_type='table', t1_col='seconds').as_df()[1]
     frame_times = frame_times.rename(columns={'text':'frameN','t1':'time'})
@@ -26,6 +28,9 @@ def get_datadf_simple(rawUSinput, au, syncloc):
     for i in range(1, len(frame_times)):
         if frame_times['frameN'][i-1]=='NA':
             frame_times.loc[i,'us_diff']=np.nan
+
+    if maxhz > 0:
+        au = pcall(au, 'Filter (stop Hann band)...', 0, maxhz, 100)  # filter voicing
 
     pmfcc = au.to_mfcc()
     mfcc = np.transpose(pmfcc.to_array())  # transpose this to get time (frames) on the first dimension
