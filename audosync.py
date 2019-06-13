@@ -43,6 +43,47 @@ def get_datadf_simple(rawUSinput, au, syncloc, maxhz=300):
     
     return frame_times
 
+def get_datadf_2der(rawUSinput, au, syncloc, maxhz=300):
+    
+    frame_times = audiolabel.LabelManager(from_file = syncloc, from_type='table', t1_col='seconds').as_df()[1]
+    frame_times = frame_times.rename(columns={'text':'frameN','t1':'time'})
+
+    if isinstance(rawUSinput,np.ndarray):
+        frames = rawUSinput
+    else :
+        frames = [rawUSinput.get_frame(i) for i in range(0, rawUSinput.nframes)]
+    
+    frames_diff = [np.mean(np.abs(frames[i]-frames[i-1])) for i in range(1, len(frames))]
+    
+    frame_times['us_diff'] = frame_times['frameN'].apply(lambda x: frames_diff[int(x)-1] 
+                                                         if (x!='NA' and int(x)>0) else np.nan)
+    for i in range(1, len(frame_times)):
+        if frame_times['frameN'][i-1]=='NA':
+            frame_times.loc[i,'us_diff']=np.nan
+
+    if maxhz > 0:
+        au = pcall(au, 'Filter (stop Hann band)...', 0, maxhz, 100)  # filter voicing
+
+    pmfcc = au.to_mfcc()
+    mfcc = np.transpose(pmfcc.to_array())  # transpose this to get time (frames) on the first dimension
+
+    au_diff = [np.mean(np.abs(mfcc[i]-mfcc[i-1])) for i in range(1, len(mfcc))]
+    frame_times['au_diff']=frame_times.time.apply(lambda x: au_diff[int(pmfcc.get_frame_number_from_time(x)+1)])
+
+    pmint = au.to_intensity()
+    frame_times['au_int'] = frame_times.time.apply(lambda x: pmint.get_value(x))
+    
+    us_acc = [frame_times['us_diff'][i]-frame_times['us_diff'][i-1] for i in range(2, len(frame_times))]
+    frame_times['us_acc'] = frame_times['frameN'].apply(lambda x: us_acc[int(x)-1]
+                                                             if (x!='NA' and int(x)>1) else np.nan)
+    au_acc = [frame_times['au_diff'][i] - frame_times['au_diff'][i-1] for i in range (1, len(frame_times))]
+    frame_times['au_acc'] = np.nan
+    frame_times['au_acc'][1:len(frame_times)] = au_acc    
+    
+    return frame_times
+
+    
+
 
 # bpr: BPR file
 # au: Parselmouth Sound object, mono
