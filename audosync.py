@@ -108,8 +108,8 @@ def get_corr_pos(validdf, tg):
     for i in range(0, len(validdf)-1):
         synctime = validdf.time[i]
         labmatch = pm.tier('phone').label_at(synctime).text
-        labt1 = int(pm.tier('phone').label_at(synctime).t1)
-        labt2 = int(pm.tier('phone').label_at(synctime).t2)
+        labt1 = float(pm.tier('phone').label_at(synctime).t1)
+        labt2 = float(pm.tier('phone').label_at(synctime).t2)
         labperc = float((synctime-labt1)/(labt2-labt1))            
         phone.append(labmatch)
         pos.append(labperc)
