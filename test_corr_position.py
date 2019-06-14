@@ -7,6 +7,7 @@ import ultratils.pysonix.bprreader
 import pandas as pd
 import matplotlib.pyplot as plt
 import parselmouth
+import seaborn as sns
 from scipy import stats
 import audosync as audo
 import derivatives as der
@@ -20,55 +21,8 @@ args = parser.parse_args()
 datadir = args.datadir
 testsubj = args.subject
 
-def get_datadf_simple(rawUSinput, au, syncloc, der = 1):
-
-    frame_times = audiolabel.LabelManager(from_file = syncloc, from_type='table', t1_col='seconds').as_df()[1]
-    frame_times = frame_times.rename(columns={'text':'frameN','t1':'time'})
-
-    if isinstance(rawUSinput,np.ndarray):
-    #os.path.splitext(rawUSinput)[1] == '.bpr' : 
-        frames = rawUSinput
-    else :
-        frames = [bpr.get_frame(i) for i in range(0, bpr.nframes)]
-
-    frames_diff = [np.mean(np.abs(frames[i]-frames[i-1])) for i in range(1, len(frames))]
-
-    frame_times['us_diff'] = frame_times['frameN'].apply(lambda x: frames_diff[int(x)-1]
-                                                         if (x!='NA' and int(x)>0) else np.nan)
-    for i in range(1, len(frame_times)):
-        if frame_times['frameN'][i-1]=='NA':
-            frame_times.loc[i,'us_diff']=np.nan
-
-    pmfcc = au.to_mfcc()
-    mfcc = np.transpose(pmfcc.to_array())  # transpose this to get time (frames) on the first dimension
-
-    au_diff = [np.mean(np.abs(mfcc[i]-mfcc[i-1])) for i in range(1, len(mfcc))]
-    frame_times['au_diff']=frame_times.time.apply(lambda x: au_diff[int(pmfcc.get_frame_number_from_time(x)+1)])
-
-    pmint = au.to_intensity()
-    frame_times['au_int'] = frame_times.time.apply(lambda x: pmint.get_value(x))
-
-    if der == 2: # would a third derivative mean anything? Could put in a loop here I suppose.
-#        for i in range(2, len(frame_times)):
-        us_acc = [frame_times['us_diff'][i]-frame_times['us_diff'][i-1] for i in range(2, len(frame_times))]
-        frame_times['us_acc'] = frame_times['frameN'].apply(lambda x: us_acc[int(x)-1]
-                                                         if (x!='NA' and int(x)>1) else np.nan)
-        au_acc = [frame_times['au_diff'][i] - frame_times['au_diff'][i-1] for i in range (1, len(frame_times))]
-        frame_times['au_acc'] = np.nan
-        frame_times['au_acc'][1:len(frame_times)] = au_acc
-        #frame_times['frameN'].apply(lambda x: us_acc[int(x)-1]
-        #                                                 if (x!='NA' and int(x)>1) else np.nan)
-       #
-        return frame_times#, au_acc
-
-#frame_times = get_datadf_simple(bpr,au,syncloc,der = 2)
-
-# print(au_acc[0:5])
-
-
-#testsubj = '121'
 tss = next(os.walk(os.path.join(datadir,testsubj)))[1]
-testcases = tss[3:50]
+testcases = tss[3:15]
 #testcase = '2015-10-30T104019-0700'
 
 frame_times = None
@@ -80,6 +34,8 @@ for testcase in testcases:
 
 # get tg
     tg = os.path.join(datadir, testsubj, testcase, testcase +'.TextGrid')
+    if not os.path.isfile(tg):
+        continue
 # read in the audio
     auloc = os.path.join(datadir, testsubj, testcase, testcase+'.bpr.wav')
     au = parselmouth.Sound(auloc)
@@ -87,17 +43,41 @@ for testcase in testcases:
 
 # get sync file
     syncloc = os.path.join(datadir, testsubj, testcase, testcase+'.bpr.sync.txt')
-    utt_frametimes = get_datadf_simple(bpr, au, syncloc, der = 2)
-    utt_frametimes = audo.syncmatch(utt_frametimes, windowlen=0.08, offset=0)
+    utt_frametimes = audo.get_datadf_2der(bpr, au, syncloc, maxhz = 200)
+    windowlen = 0.075
+    utt_frametimes = audo.syncmatch(utt_frametimes, windowlen=windowlen, offset=0)
     utt_frametimes = audo.get_corr_pos(utt_frametimes,tg)
+    # get r and p for acceleration
+    rs = []
+    ps = []
+    acc_df = None
+    acc_df = utt_frametimes[np.isfinite(utt_frametimes['us_acc'])]
+    print(acc_df.head())
+    starttimes = [t for t in acc_df['time'] if t+windowlen < np.max(acc_df['time'])]
+    for starttime in starttimes:
+        subdf = acc_df[(acc_df['time'] >= starttime-windowlen/2) & (acc_df['time'] <= starttime+windowlen/2)]
+        sts = stats.linregress(x=subdf['us_acc'], y=subdf['au_acc'])
+    #    print(sts.rvalue)
+    #    print(sts.pvalue)
+        rs = rs + [sts.rvalue]
+        ps = ps + [sts.pvalue]
+
+    acc_df = pd.concat([acc_df,pd.DataFrame({'r_acc':rs})], ignore_index=False, axis=1)
+    acc_df = pd.concat([acc_df,pd.DataFrame({'p_acc':ps})], ignore_index=False, axis=1)
+    
+    
+    
     if frame_times is None:
-        frame_times = utt_frametimes
+        frame_times = acc_df
     else:
-        dfs = (frame_times,utt_frametimes)
+        dfs = (frame_times,acc_df)
         frame_times = pd.concat(dfs)
 print(frame_times.head())
-ftp = frame_times[frame_times.p < 0.05]
-ftp = ftp[ftp.phon != 'sp']
-ftp.plot(x = 'pos', y = 'r',kind = 'scatter')
+ftp = frame_times[frame_times.p_acc < 0.2]
+ftp = ftp[ftp.phone != 'sp']
+ftp.plot(x = 'pos', y = 'r_acc',kind = 'scatter')
+# ftpp = sns.regplot(data=ftp, x="pos", y="r", fit_reg=False, marker="o")
+# for line in range(0,ftp.shape[0]):
+#     ftpp.text(ftp.pos[line]+0.2, ftp.r[line], ftp.phone[line], horizontalalignment='left', size='medium', color='black', weight='semibold')
 plt.show()
 #frame_times.plot(x='time',y='au_diff',secondary_y=True,ax=fig)
