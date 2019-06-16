@@ -4,7 +4,9 @@ import numpy as np
 import ultratils.pysonix.bprreader
 import pandas as pd
 import parselmouth
+# try:
 from parselmouth.praat import call as pcall  
+# except ModuleNotFoundError as e:
 from scipy import stats
 
 
@@ -143,18 +145,22 @@ def matchstreak(syncdf, p_crit=0.05, r_crit=0.5):
     return (maxstreak, streakonset, streakoffset)
     
 def get_corr_pos(validdf, tg):
+    word = []
     phone = []
     pos = []
     pm = audiolabel.LabelManager(from_file = tg, from_type = 'praat')    
     for i in range(0, len(validdf)-1):
         synctime = validdf.time[i]
+        labword = pm.tier('word').label_at(synctime).text
         labmatch = pm.tier('phone').label_at(synctime).text
         labt1 = float(pm.tier('phone').label_at(synctime).t1)
         labt2 = float(pm.tier('phone').label_at(synctime).t2)
         labperc = float((synctime-labt1)/(labt2-labt1))            
         phone.append(labmatch)
         pos.append(labperc)
+        word.append(labword)
     posdf = pd.concat([validdf,pd.DataFrame({'phone':phone})], ignore_index = False, axis = 1)
-    posdf = pd.concat([posdf,pd.DataFrame({'pos':pos})], ignore_index = False, axis = 1)
+    posdf = pd.concat([posdf,pd.DataFrame({'pos':pos})], ignore_index = False, axis = 1)i
+    posdf = pd.concat([posdf,pd.DataFrame({'word':word})], ignore_index = False, axis = 1)
     return posdf
                 
