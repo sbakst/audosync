@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 import parselmouth
 import seaborn as sns
 from scipy import stats
+import struct
+from struct import error
+from struct import unpack
 import audosync as audo
 import derivatives as der
 
@@ -57,6 +60,8 @@ for testcase in testcases:
             continue
 # read in the BPR
     bprloc = os.path.join(datadir, testsubj, testcase, testcase+'.bpr')
+    if os.path.getsize(bprloc) ==  0:
+        continue
     bpr = ultratils.pysonix.bprreader.BprReader(bprloc)
 
 # get tg
@@ -64,7 +69,7 @@ for testcase in testcases:
 # read in the audio
     
     auloc = os.path.join(datadir, testsubj, testcase, testcase+'.bpr.wav')
-    if not auloc:
+    if not os.path.isfile(auloc):
         continue
     au = parselmouth.Sound(auloc)
     au = au.extract_channel(1)
@@ -80,7 +85,10 @@ for testcase in testcases:
         continue
     try:
         utt_frametimes = audo.get_datadf_2der(bpr, au, syncloc, maxhz = 270)
-    except :#struct.error:# (IndexError) or (struct.error):
+    except IndexError:
+        continue
+    except struct.error as err:
+        print(err)
         continue
     windowlen = 0.075
     utt_frametimes = audo.syncmatch(utt_frametimes, windowlen=windowlen, offset=0)
