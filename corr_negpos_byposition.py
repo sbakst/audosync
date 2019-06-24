@@ -56,6 +56,8 @@ for testcase in testcases:
     stimfi = os.path.join(datadir, testsubj, testcase, 'stim.txt')
     stimo = open(stimfi)
     stim = stimo.read()
+    if stim == 'bolus':
+        continue
     print(stim + ' ' + str(testcase))
     if args.subset != 'all':
         if stim not in words:
@@ -119,7 +121,7 @@ for testcase in testcases:
         dfs = (frame_times,acc_df)
         frame_times = pd.concat(dfs)
 print(frame_times.head())
-fftp = frame_times[frame_times.p < 0.05]
+fftp = frame_times#[frame_times.p < 0.05]
 
 si = ['pos','neg']
 for sign in si:
@@ -131,14 +133,16 @@ for sign in si:
         
     ftp = ftp[ftp.phone != 'sp']
     # ftp.plot(x = 'pos', y = 'r',kind = 'scatter')
-    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')]
+    vtp = ftp[(ftp.phone == 'AY1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0')]
+#    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')]
     stp = ftp[(ftp.phone == 'S' )|( ftp.phone == 'SH')]
     rtp = ftp[(ftp.phone == 'L' )|( ftp.phone == 'R') | (ftp.phone == 'W')]
     ktp = ftp[(ftp.phone == 'B' )|( ftp.phone == 'P') | (ftp.phone == 'K') | (ftp.phone == 'G' )|( ftp.phone == 'D') |( ftp.phone == 'T')]
     ntp = ftp[(ftp.phone == 'N' )|(  ftp.phone == 'M')]
     
     fig, ([ax1, ax2, ax3, ax4, ax5], [ax6, ax7, ax8, ax9, ax10]) = plt.subplots(2, 5)
-    
+    fig.set_size_inches(35, 8)    
+
     vtpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = vtp, ax = ax1)
     stpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = stp, ax = ax2)
     rtpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = rtp, ax = ax3)
@@ -159,7 +163,11 @@ for sign in si:
     vtpp = sns.scatterplot(x="pos", y="au_diff", hue = 'phone', data = vtp, alpha = 0.5, ax = ax6)
     vtpp2 = vtpp.twinx()
     sns.scatterplot(x = "pos", y = "us_diff", hue = 'phone', marker = '+',data = vtp, ax = vtpp2)
-    
+#    h1, l1 = ax6.get_legend_handles_labels()
+#    h2, l2 = vtpp2.get_legend_handles_labels()
+#    ax6.legend(h1+h2, l1+l2, loc=3)
+    ax6.get_legend().set_visible(False)
+
     stpp = sns.scatterplot(x="pos", y="au_diff", hue = 'phone', data = stp,  alpha = 0.5,ax = ax7)
     stpp2 = stpp.twinx()
     sns.scatterplot(x = "pos", y = "us_diff", hue = 'phone', marker = '+',data = stp,ax = stpp2)
@@ -182,7 +190,7 @@ for sign in si:
     # for line in range(0,ftp.shape[0]):
     #     ftpp.text(ftp.pos[line]+0.2, ftp.r[line], ftp.phone[line], horizontalalignment='left', size='medium', color='black', weight='semibold')
     
-    figname = sign + '_' + testsubj + '_byposition.png'
+    figname = sign +'_testallwords_allp_' + testsubj + '_byposition.png'
     savename = os.path.join(savedir,figname)
     fig.savefig(savename)
     #plt.show()
