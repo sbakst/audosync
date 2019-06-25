@@ -44,9 +44,9 @@ for sign in signs:
     fig, ax1 = plt.subplots(1,1)
     fig.set_size_inches(11,6)
 
-    vtpp = sns.lineplot(x="pos", y="us_diff", hue = 'phone',estimator = np.mean,ci='sd', data = vtp, alpha = 0.5, ax = ax1)
+    vtpp = sns.lineplot(x="pos", y="us_diff", hue = 'phone',estimator = np.mean, data = vtp, alpha = 0.5, ax = ax1)
     vtpp2 = vtpp.twinx()
-    sns.lineplot(x = "pos", y = "au_diff", hue = 'phone', estimator = np.mean,ci = None,dashes = False,data = vtp, ax = vtpp2)
+    sns.lineplot(x = "pos", y = "au_diff", hue = 'phone', estimator = np.mean,dashes = False,data = vtp, ax = vtpp2)
     ax1.get_legend().set_visible(False)
     numines = ax1.get_lines()
     print(len(numines))
