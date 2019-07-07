@@ -45,21 +45,23 @@ df10 = df[df.p < 0.10]
 
 fig, ax = plt.subplots(1,1)
 fig.set_size_inches(11,6)
-p05 = sns.lineplot(x="pos", y="r", hue = "windowlength",estimator = np.median, data = df05, alpha = 0.7, ax = ax)
+p05 = sns.lineplot(x="offset", y="r", hue = "windowlength",estimator = np.median, data = df05, alpha = 0.7, ax = ax)
 p05.legend(loc='upper right')
 pic05 = 'windows_p05.png'
 savepic = os.path.join(savedir,pic05)
 fig.savefig(savepic)
 
 fig2, ax2 = plt.subplots(1,1)
-p10 = sns.lineplot(x="pos", y="r", hue = "windowlength",estimator = np.median, data = df10, alpha = 0.7, ax = ax2)
+fig2.set_size_inches(11,6)
+p10 = sns.lineplot(x="offset", y="r", hue = "windowlength",estimator = np.median, data = df10, alpha = 0.7, ax = ax2)
 p10.legend(loc='upper right')
 pic10 = 'windows_p10.png'
 savepic = os.path.join(savedir,pic10)
 fig2.savefig(savepic)
 
 fig3, ax3 = plt.subplots(1,1)
-pall = sns.lineplot(x="pos", y = "r", hue = "windowlength", estimator = np.median, data = df, alpha =0.7, ax = ax3)
+fig3.set_size_inches(11,6)
+pall = sns.lineplot(x="offset", y = "r", hue = "windowlength", estimator = np.median, data = df, alpha =0.7, ax = ax3)
 picall = 'windows_allvals.png'
 savepic = os.path.join(savedir,picall)
 fig3.savefig(savepic)
