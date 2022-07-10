@@ -121,6 +121,12 @@ for testcase in testcases:
         dfs = (frame_times,acc_df)
         frame_times = pd.concat(dfs)
 print(frame_times.head())
+
+savcsv = 'csv_all_'+testsubj+'.csv'
+saveme = os.path.join(savedir,savcsv)
+frame_times.to_csv(saveme)
+
+
 fftp = frame_times#[frame_times.p < 0.05]
 
 si = ['pos','neg']
