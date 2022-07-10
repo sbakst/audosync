@@ -46,12 +46,14 @@ if args.subset != 'all':
 
 subs = [121,122,123,124,125,126,127,128]
 
+
+frame_times = None
 for testsubj in subs:
     testsubj = str(testsubj)
     tss = next(os.walk(os.path.join(datadir,testsubj)))[1]
     testcases = tss
     #testcase = '2015-10-30T104019-0700'
-    frame_times = None
+#    frame_times = None
     for testcase in testcases:
     
     #    if args.subset:
@@ -117,13 +119,19 @@ for testsubj in subs:
     
         acc_df = pd.concat([acc_df,pd.DataFrame({'r_acc':rs})], ignore_index=False, axis=1)
         acc_df = pd.concat([acc_df,pd.DataFrame({'p_acc':ps})], ignore_index=False, axis=1)
-            
+        acc_df['subj'] = str(testsubj)
+    
         if frame_times is None:
             frame_times = acc_df
         else:
             dfs = (frame_times,acc_df)
             frame_times = pd.concat(dfs)
 print(frame_times.head())
+
+savcsv = 'csv_all_subs.csv'
+saveme = os.path.join(savedir,savcsv)
+frame_times.to_csv(saveme)
+
 fftp = frame_times[frame_times.p < 0.15]
 
 si = ['pos','neg']
@@ -137,7 +145,7 @@ for sign in si:
     ftp = ftp[ftp.phone != 'sp']
     # ftp.plot(x = 'pos', y = 'r',kind = 'scatter')
     vtp = ftp[(ftp.phone == 'AY1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0')]
-#    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')]
+#    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')|(ftp.phone=='AO1')|(ftp.phone=='EY1')]
     stp = ftp[(ftp.phone == 'S' )|( ftp.phone == 'SH')]
     rtp = ftp[(ftp.phone == 'L' )|( ftp.phone == 'R') | (ftp.phone == 'W')]
     ktp = ftp[(ftp.phone == 'B' )|( ftp.phone == 'P') | (ftp.phone == 'K') | (ftp.phone == 'G' )|( ftp.phone == 'D') |( ftp.phone == 'T')]
@@ -190,7 +198,7 @@ for sign in si:
     # for line in range(0,ftp.shape[0]):
     #     ftpp.text(ftp.pos[line]+0.2, ftp.r[line], ftp.phone[line], horizontalalignment='left', size='medium', color='black', weight='semibold')
     
-    figname = sign +'_allsubj_byposition_015.png'
+    figname = sign +'_testingallsubj_byposition_015.png'
     savename = os.path.join(savedir,figname)
     fig.savefig(savename)
     #plt.show()

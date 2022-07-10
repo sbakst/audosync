@@ -46,7 +46,7 @@ if args.subset != 'all':
         words = ['doe','don','bar','bore','beer','lob','ball','lobe','bowl','wad','wand','Watt','watt','want','bed','bet','ben','Ben','bend','bent','gauche','posh','piece','quiche','dose','cat','cad','canned','can',"can't",'paid','pate','pained','pain','paint']
 
 tss = next(os.walk(os.path.join(datadir,testsubj)))[1]
-testcases = tss
+testcases = tss[1:6]
 #testcase = '2015-10-30T104019-0700'
 frame_times = None
 for testcase in testcases:
@@ -133,13 +133,15 @@ for sign in si:
         
     ftp = ftp[ftp.phone != 'sp']
     # ftp.plot(x = 'pos', y = 'r',kind = 'scatter')
-    vtp = ftp[(ftp.phone == 'AY1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0')]
-#    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')]
+#    vtp = ftp[(ftp.phone == 'AY1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0')]
+    vtp = ftp[(ftp.phone == 'AY1') |( ftp.phone == 'OW1')|( ftp.phone == 'AA1' )|( ftp.phone == 'IY1' )|( ftp.phone == 'AH0' )|( ftp.phone == 'AH1')| (ftp.phone == 'EH1')| ( ftp.phone == 'AE1')|(ftp.phone=='IH1')]
     stp = ftp[(ftp.phone == 'S' )|( ftp.phone == 'SH')]
     rtp = ftp[(ftp.phone == 'L' )|( ftp.phone == 'R') | (ftp.phone == 'W')]
     ktp = ftp[(ftp.phone == 'B' )|( ftp.phone == 'P') | (ftp.phone == 'K') | (ftp.phone == 'G' )|( ftp.phone == 'D') |( ftp.phone == 'T')]
-    ntp = ftp[(ftp.phone == 'N' )|(  ftp.phone == 'M')]
-    
+    ntp = ftp[(ftp.phone == 'N' )|(  ftp.phone == 'M')]      
+
+
+
     fig, ([ax1, ax2, ax3, ax4, ax5], [ax6, ax7, ax8, ax9, ax10]) = plt.subplots(2, 5)
     fig.set_size_inches(35, 8)    
 
@@ -148,26 +150,20 @@ for sign in si:
     rtpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = rtp, ax = ax3)
     ktpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = ktp, ax = ax4)
     ntpp = sns.scatterplot(x="pos", y="r", hue = 'phone', data = ntp, ax = ax5)
-    #vtpp = sns.scatterplot(x="pos", y="r_acc", hue = 'phone', data = vtp, ax = ax6)
-    #stpp = sns.scatterplot(x="pos", y="r_acc", hue = 'phone', data = stp, ax = ax7)
-    #rtpp = sns.scatterplot(x="pos", y="r_acc", hue = 'phone', data = rtp, ax = ax8)
-    #ktpp = sns.scatterplot(x="pos", y="r_acc", hue = 'phone', data = ktp, ax = ax9)
-    #ntpp = sns.scatterplot(x="pos", y="r_acc", hue = 'phone', data = ntp, ax = ax10)
     
-    #vtpp = sns.scatterplot(x="us_diff", y="au_diff", hue = 'phone', data = vtp, ax = ax6)
-    #stpp = sns.scatterplot(x="us_diff", y="au_diff", hue = 'phone', data = stp, ax = ax7)
-    #rtpp = sns.scatterplot(x="us_diff", y="au_diff", hue = 'phone', data = rtp, ax = ax8)
-    #ktpp = sns.scatterplot(x="us_diff", y="au_diff", hue = 'phone', data = ktp, ax = ax9)
-    #ntpp = sns.scatterplot(x="us_diff", y="au_diff", hue = 'phone', data = ntp, ax = ax10)
-    
-    vtpp = sns.scatterplot(x="pos", y="au_diff", hue = 'phone', data = vtp, alpha = 0.5, ax = ax6)
+    vtpp = sns.lineplot(x="pos", y="au_diff", hue = 'phone',estimator = 'mean', data = vtp, alpha = 0.5, ax = ax6)
     vtpp2 = vtpp.twinx()
-    sns.scatterplot(x = "pos", y = "us_diff", hue = 'phone', marker = '+',data = vtp, ax = vtpp2)
+    sns.lineplot(x = "pos", y = "us_diff", hue = 'phone', estimator = 'mean',data = vtp, ax = vtpp2)
 #    h1, l1 = ax6.get_legend_handles_labels()
 #    h2, l2 = vtpp2.get_legend_handles_labels()
 #    ax6.legend(h1+h2, l1+l2, loc=3)
     ax6.get_legend().set_visible(False)
-
+#    ax6.lines[0].set_linestyle("--")
+    numines = ax6.get_lines()    
+    print(len(numines))
+    nums = int(((len(numines))-1)/2)
+    for p in range(0,nums):
+        ax6.lines[p].set_linestyle("--")
     stpp = sns.scatterplot(x="pos", y="au_diff", hue = 'phone', data = stp,  alpha = 0.5,ax = ax7)
     stpp2 = stpp.twinx()
     sns.scatterplot(x = "pos", y = "us_diff", hue = 'phone', marker = '+',data = stp,ax = stpp2)
@@ -190,7 +186,7 @@ for sign in si:
     # for line in range(0,ftp.shape[0]):
     #     ftpp.text(ftp.pos[line]+0.2, ftp.r[line], ftp.phone[line], horizontalalignment='left', size='medium', color='black', weight='semibold')
     
-    figname = sign +'_testallwords_allp_' + testsubj + '_byposition.png'
+    figname = sign +'_testallwords_allp_curves_' + testsubj + '_byposition.png'
     savename = os.path.join(savedir,figname)
     fig.savefig(savename)
     #plt.show()

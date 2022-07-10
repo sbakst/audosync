@@ -5,6 +5,14 @@ get value representing change in tongue position
 get change in change in tongue position
 '''
 
+import sys
+import audiolabel
+import numpy as np
+import ultratils.pysonix.bprreader
+import pandas as pd
+import parselmouth
+from scipy import stats
+
 
 def diffs(frame_array,der_num=1):
     import numpy as np
@@ -22,8 +30,9 @@ def diffs(frame_array,der_num=1):
     
 def derval(der_array):
     import numpy as np
-    vals = []
+    usdiff_vals = []
     for i in np.arange(0,len(der_array)):
-        vals.append(np.linalg.norm(der_array[i]))
-    return(vals)
+        usdiff_vals.append(np.linalg.norm(der_array[i]))
+    return(usdiff_vals)
+
         

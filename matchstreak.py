@@ -39,12 +39,15 @@ for testsubj in subs:
     testsubj = str(testsubj)
     tss = next(os.walk(os.path.join(datadir,testsubj)))[1]
     testcases = tss
+    print(len(tss))
     #testcase = '2015-10-30T104019-0700'
 #    frame_times = None
     for testcase in testcases:
 
     # get stim
         stimfi = os.path.join(datadir, testsubj, testcase, 'stim.txt')
+        if not os.path.isfile(stimfi):
+            continue
         stimo = open(stimfi)
         stim = stimo.read()
         if stim == 'bolus':
@@ -84,7 +87,8 @@ for testsubj in subs:
         windowlens = [.150, .175, .200, .225]
         for win in windowlens:
             print(win)
-            offsets = [0, 0.05, 0.1, 0.15]
+            offsets = [-0.03, -0.02, -0.01, 0, 0.01, 0.02, 0.03]
+            # offsets = [0, -0.05, -0.1, -0.15]
             for ofs in offsets:
                 utt_frametimes = audo.syncmatch(utt_frametimes_base, windowlen=win, offset=ofs)
                 utt_frametimes = audo.get_corr_pos(utt_frametimes,tg)
@@ -101,17 +105,17 @@ for testsubj in subs:
                 utt_frametimes = pd.concat([utt_frametimes,pd.DataFrame({'matchstreak':matches})],ignore_index = False, axis = 1)
 
                 if frame_times is None:
-                    #print('yay')
+                    print('yay')
                     frame_times = utt_frametimes
                 else:
-                    #print('boo')
+                    print('boo')
                     dfs = (frame_times,utt_frametimes)
                     frame_times = pd.concat(dfs)
 
 
 #print(frame_times.head())
 
-savcsv = 'csv_all_subs_matchstreak.csv'
+savcsv = 'csv_all_subs_tens_matchstreak.csv'
 saveme = os.path.join(savedir,savcsv)
 frame_times.to_csv(saveme)
 
